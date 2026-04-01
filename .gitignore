@@ -3,8 +3,6 @@
 # build
 /target
 /dist
-/.next
-/node_modules
 
 # misc
 .DS_Store
