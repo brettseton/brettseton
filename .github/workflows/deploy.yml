@@ -30,7 +30,7 @@ jobs:
         run: cargo install trunk --locked
 
       - name: Build site
-        run: trunk build --release
+        run: trunk build --release --public-url /brettseton/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
