@@ -1,5 +1,6 @@
 pub mod guess;
 pub mod snake;
+pub mod tetris;
 
 #[derive(Clone, Default, Eq, PartialEq)]
 pub struct AppLine {
@@ -16,6 +17,7 @@ pub struct AppSegment {
 pub enum AppKind {
     Guess,
     Snake,
+    Tetris,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -107,6 +109,7 @@ impl AppRegistry {
         match kind {
             AppKind::Guess => guess::launch(),
             AppKind::Snake => snake::launch(),
+            AppKind::Tetris => tetris::launch(),
         }
     }
 }

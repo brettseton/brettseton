@@ -6,6 +6,7 @@ mod help;
 mod linkedin;
 mod snake;
 mod stack;
+mod tetris;
 
 use crate::apps::AppKind;
 
@@ -19,6 +20,7 @@ pub use help::HelpCommand;
 pub use linkedin::LinkedInCommand;
 pub use snake::SnakeCommand;
 pub use stack::StackCommand;
+pub use tetris::TetrisCommand;
 
 fn launch_app_command(target: &str, name: &str, kind: AppKind) -> CommandResult {
     if target.is_empty() {

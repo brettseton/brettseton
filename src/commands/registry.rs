@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use super::builtin::{
     AboutCommand, ClearCommand, GithubCommand, GuessCommand, HelpCommand, LinkedInCommand,
-    SnakeCommand, StackCommand,
+    SnakeCommand, StackCommand, TetrisCommand,
 };
 use super::{BuiltinCommand, CommandResult, parse};
 
@@ -14,8 +14,9 @@ static HELP_COMMAND: HelpCommand = HelpCommand;
 static LINKEDIN_COMMAND: LinkedInCommand = LinkedInCommand;
 static SNAKE_COMMAND: SnakeCommand = SnakeCommand;
 static STACK_COMMAND: StackCommand = StackCommand;
+static TETRIS_COMMAND: TetrisCommand = TetrisCommand;
 
-static COMMANDS: [&dyn BuiltinCommand; 8] = [
+static COMMANDS: [&dyn BuiltinCommand; 9] = [
     &ABOUT_COMMAND,
     &CLEAR_COMMAND,
     &GITHUB_COMMAND,
@@ -24,6 +25,7 @@ static COMMANDS: [&dyn BuiltinCommand; 8] = [
     &LINKEDIN_COMMAND,
     &SNAKE_COMMAND,
     &STACK_COMMAND,
+    &TETRIS_COMMAND,
 ];
 
 #[derive(Clone, Copy, Default)]

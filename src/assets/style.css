@@ -129,6 +129,34 @@ a {
   color: #ff5f57;
 }
 
+.tetris-i {
+  color: #7dd3fc;
+}
+
+.tetris-o {
+  color: #fde047;
+}
+
+.tetris-t {
+  color: #c084fc;
+}
+
+.tetris-s {
+  color: #86efac;
+}
+
+.tetris-z {
+  color: #fca5a5;
+}
+
+.tetris-j {
+  color: #93c5fd;
+}
+
+.tetris-l {
+  color: #fdba74;
+}
+
 .line-prefix {
   margin-right: 0.75rem;
 }
