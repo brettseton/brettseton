@@ -5,6 +5,9 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
   pages: write
@@ -21,7 +24,7 @@ jobs:
       CARGO_TERM_COLOR: always
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust target
         run: rustup target add wasm32-unknown-unknown
@@ -30,7 +33,7 @@ jobs:
         run: cargo install trunk --locked
 
       - name: Build site
-        run: trunk build --release --public-url /brettseton/
+        run: trunk build --release --public-url /
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
