@@ -1,2 +1,13 @@
+pub mod app;
+pub mod bootstrap;
+pub mod controls;
 pub mod core;
-pub mod renderer;
+mod dom;
+pub mod input;
+pub mod link;
+pub mod model;
+mod render_state;
+pub mod session;
+mod shell_dom;
+pub mod socials;
+pub mod ui;

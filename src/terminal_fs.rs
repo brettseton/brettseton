@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 include!(concat!(env!("OUT_DIR"), "/terminal_fs_data.rs"));
 
-use crate::commands::TerminalActions;
+use crate::commands::CommandResult;
 
 pub enum TerminalItem<'a> {
     File(&'a [String]),
@@ -15,15 +15,22 @@ pub enum OwnedTerminalItem {
 }
 
 impl OwnedTerminalItem {
-    pub fn execute(&self, target: &str, terminal: &mut dyn TerminalActions) {
+    pub fn execute(&self, target: &str) -> CommandResult {
         match self {
-            Self::File(file) => terminal.append_output(file.clone()),
-            Self::Link(link) => {
-                terminal.append_output(vec![format!("opening {}...", basename(target))]);
-                terminal.open_link(link.clone());
-            }
+            Self::File(file) => CommandResult::with_lines(file.clone()),
+            Self::Link(link) => CommandResult::with_open_link(
+                link.clone(),
+                vec![format!("opening {}...", basename(target))],
+            ),
         }
     }
+}
+
+pub trait FileSystem {
+    fn resolve_directory(&self, value: &str) -> Option<&[String]>;
+    fn root_items(&self) -> Vec<String>;
+    fn resolve_owned_item(&self, value: &str) -> Option<OwnedTerminalItem>;
+    fn links(&self) -> &BTreeMap<String, String>;
 }
 
 #[derive(Clone)]
@@ -42,9 +49,9 @@ pub fn load_terminal_fs() -> TerminalFs {
 }
 
 impl TerminalFs {
-    pub fn resolve_directory(&self, value: &str) -> Option<&Vec<String>> {
+    pub fn resolve_directory(&self, value: &str) -> Option<&[String]> {
         let target = normalize_target(value);
-        self.directories.get(&target)
+        self.directories.get(&target).map(Vec::as_slice)
     }
 
     pub fn root_items(&self) -> impl Iterator<Item = &String> {
@@ -90,6 +97,24 @@ impl TerminalFs {
         }
 
         Some(first.to_string())
+    }
+}
+
+impl FileSystem for TerminalFs {
+    fn resolve_directory(&self, value: &str) -> Option<&[String]> {
+        Self::resolve_directory(self, value)
+    }
+
+    fn root_items(&self) -> Vec<String> {
+        Self::root_items(self).cloned().collect()
+    }
+
+    fn resolve_owned_item(&self, value: &str) -> Option<OwnedTerminalItem> {
+        Self::resolve_owned_item(self, value)
+    }
+
+    fn links(&self) -> &BTreeMap<String, String> {
+        &self.links
     }
 }
 

@@ -1,6 +1,6 @@
 use js_sys::Math;
 
-use crate::apps::{AppOutput, AppRuntime};
+use crate::apps::{AppOutput, AppRuntime, lines};
 
 const START_LINES: &[&str] = &[
     "guessing game started",
@@ -76,8 +76,4 @@ impl GuessGame {
             attempts: 0,
         }
     }
-}
-
-fn lines(values: &[&str]) -> Vec<String> {
-    values.iter().map(|value| (*value).to_string()).collect()
 }

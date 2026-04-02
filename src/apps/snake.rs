@@ -1,6 +1,6 @@
 use js_sys::Math;
 
-use crate::apps::{AppKey, AppOutput, AppRuntime};
+use crate::apps::{AppKey, AppLine, AppMode, AppOutput, AppRuntime, lines};
 
 const WIDTH: i32 = 18;
 const HEIGHT: i32 = 12;
@@ -85,38 +85,37 @@ impl AppRuntime for SnakeGame {
         Some(AppOutput::Continue(Vec::new()))
     }
 
-    fn view(&self) -> Vec<String> {
+    fn view(&self) -> Vec<AppLine> {
         let mut lines = Vec::with_capacity((HEIGHT as usize) + 3);
-        lines.push(format!("snake score: {}", self.score));
-        lines.push(format!("+{}+", "-".repeat(WIDTH as usize)));
+        lines.push(AppLine::text(format!("snake score: {}", self.score)));
+        lines.push(AppLine::text(format!("+{}+", "-".repeat(WIDTH as usize))));
 
         for y in 0..HEIGHT {
-            let mut row = String::with_capacity((WIDTH as usize) + 2);
-            row.push('|');
+            let mut row = AppLine::default();
+            row.push_plain("|");
 
             for x in 0..WIDTH {
-                let cell = if (x, y) == self.snake[0] {
-                    '@'
+                if (x, y) == self.snake[0] {
+                    row.push_plain("@");
                 } else if self.snake.iter().skip(1).any(|segment| *segment == (x, y)) {
-                    'o'
+                    row.push_plain("o");
                 } else if (x, y) == self.food {
-                    '*'
+                    row.push_styled("*", "snake-food");
                 } else {
-                    ' '
-                };
-                row.push(cell);
+                    row.push_plain(" ");
+                }
             }
 
-            row.push('|');
+            row.push_plain("|");
             lines.push(row);
         }
 
-        lines.push(format!("+{}+", "-".repeat(WIDTH as usize)));
+        lines.push(AppLine::text(format!("+{}+", "-".repeat(WIDTH as usize))));
         lines
     }
 
-    fn is_realtime(&self) -> bool {
-        true
+    fn mode(&self) -> AppMode {
+        AppMode::Realtime
     }
 }
 
@@ -165,8 +164,4 @@ fn is_opposite(current: Direction, next: Direction) -> bool {
             | (Direction::Left, Direction::Right)
             | (Direction::Right, Direction::Left)
     )
-}
-
-fn lines(values: &[&str]) -> Vec<String> {
-    values.iter().map(|value| (*value).to_string()).collect()
 }
