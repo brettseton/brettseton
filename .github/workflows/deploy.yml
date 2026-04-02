@@ -30,7 +30,7 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Install Trunk
-        run: cargo install trunk --locked
+        uses: taiki-e/install-action@trunk
 
       - name: Build site
         run: trunk build --release --public-url /
