@@ -13,6 +13,7 @@ use terminal_fs::load_terminal_fs;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
+use web_sys::PointerEvent;
 
 #[wasm_bindgen(start)]
 pub fn run() -> Result<(), JsValue> {
@@ -119,6 +120,8 @@ impl App {
             on_tick.forget();
         }
 
+        bind_joystick(&app)?;
+
         Ok(())
     }
 
@@ -162,4 +165,127 @@ fn map_app_key(value: &str) -> Option<AppKey> {
         "Escape" => Some(AppKey::Escape),
         _ => None,
     }
+}
+
+fn bind_joystick(app: &Rc<App>) -> Result<(), JsValue> {
+    let active_pointer = Rc::new(RefCell::new(None::<i32>));
+
+    {
+        let app_for_down = Rc::clone(app);
+        let pointer_for_down = Rc::clone(&active_pointer);
+        let on_down = Closure::wrap(Box::new(move |event: PointerEvent| {
+            if !app_for_down.core.borrow().captures_keyboard() {
+                return;
+            }
+
+            event.prevent_default();
+            *pointer_for_down.borrow_mut() = Some(event.pointer_id());
+            let _ = app_for_down
+                .renderer
+                .control_stick
+                .set_pointer_capture(event.pointer_id());
+            let _ = update_joystick(&app_for_down, &event);
+        }) as Box<dyn FnMut(_)>);
+
+        app.renderer
+            .control_stick
+            .add_event_listener_with_callback("pointerdown", on_down.as_ref().unchecked_ref())?;
+        on_down.forget();
+    }
+
+    {
+        let app_for_move = Rc::clone(app);
+        let pointer_for_move = Rc::clone(&active_pointer);
+        let on_move = Closure::wrap(Box::new(move |event: PointerEvent| {
+            if *pointer_for_move.borrow() != Some(event.pointer_id()) {
+                return;
+            }
+
+            event.prevent_default();
+            let _ = update_joystick(&app_for_move, &event);
+        }) as Box<dyn FnMut(_)>);
+
+        app.renderer
+            .control_stick
+            .add_event_listener_with_callback("pointermove", on_move.as_ref().unchecked_ref())?;
+        on_move.forget();
+    }
+
+    {
+        let app_for_up = Rc::clone(app);
+        let pointer_for_up = Rc::clone(&active_pointer);
+        let on_up = Closure::wrap(Box::new(move |event: PointerEvent| {
+            if *pointer_for_up.borrow() != Some(event.pointer_id()) {
+                return;
+            }
+
+            event.prevent_default();
+            *pointer_for_up.borrow_mut() = None;
+            let _ = app_for_up
+                .renderer
+                .control_stick
+                .release_pointer_capture(event.pointer_id());
+            let _ = reset_joystick_thumb(&app_for_up);
+        }) as Box<dyn FnMut(_)>);
+
+        for event_name in ["pointerup", "pointercancel", "lostpointercapture"] {
+            app.renderer.control_stick.add_event_listener_with_callback(
+                event_name,
+                on_up.as_ref().unchecked_ref(),
+            )?;
+        }
+        on_up.forget();
+    }
+
+    Ok(())
+}
+
+fn update_joystick(app: &Rc<App>, event: &PointerEvent) -> Result<(), JsValue> {
+    let rect = app.renderer.control_stick.get_bounding_client_rect();
+    let center_x = rect.x() + rect.width() / 2.0;
+    let center_y = rect.y() + rect.height() / 2.0;
+    let dx = event.client_x() as f64 - center_x;
+    let dy = event.client_y() as f64 - center_y;
+
+    let max_radius = 26.0;
+    let magnitude = (dx * dx + dy * dy).sqrt();
+    let scale = if magnitude > max_radius {
+        max_radius / magnitude
+    } else {
+        1.0
+    };
+    let clamped_x = dx * scale;
+    let clamped_y = dy * scale;
+
+    app.renderer.control_thumb.set_attribute(
+        "style",
+        &format!(
+            "transform: translate(calc(-50% + {clamped_x:.1}px), calc(-50% + {clamped_y:.1}px));"
+        ),
+    )?;
+
+    let threshold = 10.0;
+    if magnitude < threshold {
+        return Ok(());
+    }
+
+    let key = if dx.abs() > dy.abs() {
+        if dx > 0.0 {
+            AppKey::Right
+        } else {
+            AppKey::Left
+        }
+    } else if dy > 0.0 {
+        AppKey::Down
+    } else {
+        AppKey::Up
+    };
+
+    let _ = app.handle_key(key)?;
+    Ok(())
+}
+
+fn reset_joystick_thumb(app: &Rc<App>) -> Result<(), JsValue> {
+    app.renderer.control_thumb.remove_attribute("style")?;
+    Ok(())
 }

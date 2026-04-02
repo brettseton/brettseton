@@ -84,10 +84,6 @@ impl BuiltinCommand for GameCommand {
         "guess"
     }
 
-    fn aliases(&self) -> &'static [&'static str] {
-        &["game"]
-    }
-
     fn execute(&self, target: &str, terminal: &mut dyn TerminalActions) {
         if target.is_empty() {
             terminal.launch_app(AppKind::Guess);

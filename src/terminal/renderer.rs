@@ -11,6 +11,9 @@ pub struct TerminalRenderer {
     pub(crate) form_node: HtmlElement,
     pub(crate) input_node: HtmlInputElement,
     pub(crate) shell_node: HtmlElement,
+    pub(crate) controls_node: HtmlElement,
+    pub(crate) control_stick: HtmlElement,
+    pub(crate) control_thumb: HtmlElement,
     socials: BTreeMap<String, HtmlAnchorElement>,
 }
 
@@ -20,6 +23,9 @@ impl TerminalRenderer {
         let form_node = element_by_id::<HtmlElement>(&document, "terminal-form")?;
         let input_node = element_by_id::<HtmlInputElement>(&document, "terminal-input")?;
         let shell_node = element_by_id::<HtmlElement>(&document, "terminal-shell")?;
+        let controls_node = element_by_id::<HtmlElement>(&document, "app-controls")?;
+        let control_stick = element_by_id::<HtmlElement>(&document, "control-stick")?;
+        let control_thumb = element_by_id::<HtmlElement>(&document, "control-thumb")?;
         shell_node.set_tab_index(0);
 
         let mut socials = BTreeMap::new();
@@ -38,6 +44,9 @@ impl TerminalRenderer {
             form_node,
             input_node,
             shell_node,
+            controls_node,
+            control_stick,
+            control_thumb,
             socials,
         })
     }
@@ -72,6 +81,7 @@ impl TerminalRenderer {
     ) -> Result<(), wasm_bindgen::JsValue> {
         self.history_node.set_inner_html("");
         self.input_node.set_disabled(!prompt_enabled);
+        self.controls_node.set_hidden(prompt_enabled);
         if !prompt_enabled {
             self.input_node.set_value("");
         }

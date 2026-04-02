@@ -55,5 +55,5 @@ To enable it in GitHub:
 
 - Root `ls` output is generated from the real files and links plus the built-in `guess`, `help`, and `snake` commands.
 - Files under `src/terminal-fs/links/` open in a new tab.
-- The terminal supports `?`, `about`, `clear`, `github`, `guess`, `help`, `linkedin`, `ls`, `snake`, and `stack`. `game` remains as an alias for `guess`.
+- The terminal supports `?`, `about`, `clear`, `github`, `guess`, `help`, `linkedin`, `ls`, `snake`, and `stack`.
 - In this local environment, `cargo check --target wasm32-unknown-unknown` passes, while `trunk build --release` currently fails because Trunk receives `--no-color=1`.
