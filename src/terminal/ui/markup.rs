@@ -1,8 +1,7 @@
 use wasm_bindgen::prelude::JsValue;
 use web_sys::{Document, DocumentFragment, Element};
 
-use crate::apps::AppLine;
-use crate::terminal::model::{Entry, EntryKind};
+use crate::terminal::model::{ScreenLine, ScreenLinePresentation};
 
 pub struct TerminalMarkupRenderer {
     document: Document,
@@ -13,43 +12,20 @@ impl TerminalMarkupRenderer {
         Self { document }
     }
 
-    pub fn render_history_entries(&self, entries: &[Entry]) -> Result<DocumentFragment, JsValue> {
-        let fragment = self.document.create_document_fragment();
-        for entry in entries {
-            fragment.append_child(&self.render_entry(entry)?.into())?;
-        }
-        Ok(fragment)
-    }
-
-    pub fn render_app_lines(&self, lines: &[AppLine]) -> Result<DocumentFragment, JsValue> {
+    pub fn render_screen_lines(&self, lines: &[ScreenLine]) -> Result<DocumentFragment, JsValue> {
         let fragment = self.document.create_document_fragment();
         for line in lines {
-            fragment.append_child(&self.render_app_line(line)?.into())?;
+            fragment.append_child(&self.render_line(line)?.into())?;
         }
         Ok(fragment)
     }
 
-    fn render_entry(&self, entry: &Entry) -> Result<Element, JsValue> {
+    fn render_line(&self, line: &ScreenLine) -> Result<Element, JsValue> {
         let row = self.document.create_element("div")?;
-        row.set_class_name("line");
-
-        let prefix = self.document.create_element("span")?;
-        prefix.set_class_name(entry.kind.class_name());
-        prefix.set_text_content(Some(entry.kind.prefix()));
-
-        row.append_child(&prefix)?;
-        row.append_child(&self.document.create_text_node(&entry.text))?;
-
-        Ok(row)
-    }
-
-    fn render_app_line(&self, line: &AppLine) -> Result<Element, JsValue> {
-        let row = self.document.create_element("div")?;
-        row.set_class_name("line app-view");
-
-        let prefix = self.document.create_element("span")?;
-        prefix.set_class_name(EntryKind::Output.class_name());
-        prefix.set_text_content(Some(EntryKind::Output.prefix()));
+        row.set_class_name(match line.presentation() {
+            ScreenLinePresentation::Shell => "line",
+            ScreenLinePresentation::App => "line app-view",
+        });
 
         let content = self.document.create_element("span")?;
         for segment in line.segments() {
@@ -63,7 +39,12 @@ impl TerminalMarkupRenderer {
             }
         }
 
-        row.append_child(&prefix)?;
+        if line.presentation() == ScreenLinePresentation::Shell {
+            let prefix = self.document.create_element("span")?;
+            prefix.set_class_name(line.kind().class_name());
+            prefix.set_text_content(Some(line.kind().prefix()));
+            row.append_child(&prefix)?;
+        }
         row.append_child(&content)?;
 
         Ok(row)

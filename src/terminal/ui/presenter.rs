@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::JsValue;
 use crate::terminal::model::ViewModel;
 use crate::terminal::render_state::RenderState;
 
-use super::diff::{ActiveViewChange, HistoryChange, RenderDiffStrategy};
+use super::diff::{RenderDiffStrategy, VisibleScreenChange};
 use super::markup::TerminalMarkupRenderer;
 use super::surface::TerminalSurface;
 
@@ -29,23 +29,15 @@ impl TerminalPresenter {
             let state = self.render_state.borrow();
             let plan = self.diff.build(&state, view);
 
-            match plan.history {
-                HistoryChange::Noop => {}
-                HistoryChange::Append(entries) => {
-                    let fragment = self.markup.render_history_entries(entries)?;
-                    surface.append_history(&fragment)?;
+            match plan.visible_screen {
+                VisibleScreenChange::Noop => {}
+                VisibleScreenChange::Append(lines) => {
+                    let fragment = self.markup.render_screen_lines(lines)?;
+                    surface.append_screen(&fragment)?;
                 }
-                HistoryChange::ReplaceAll(entries) => {
-                    let fragment = self.markup.render_history_entries(entries)?;
-                    surface.replace_history(&fragment)?;
-                }
-            }
-
-            match plan.active_view {
-                ActiveViewChange::Noop => {}
-                ActiveViewChange::ReplaceAll(lines) => {
-                    let fragment = self.markup.render_app_lines(lines)?;
-                    surface.replace_app_view(&fragment)?;
+                VisibleScreenChange::ReplaceAll(lines) => {
+                    let fragment = self.markup.render_screen_lines(lines)?;
+                    surface.replace_screen(&fragment)?;
                 }
             }
 
@@ -53,11 +45,9 @@ impl TerminalPresenter {
             surface.sync_focus(plan.prompt_enabled)?;
         }
 
-        self.render_state.borrow_mut().update(
-            view.history(),
-            view.active_view(),
-            view.prompt_enabled(),
-        );
+        self.render_state
+            .borrow_mut()
+            .update(view.visible_lines(), view.prompt_enabled());
 
         Ok(())
     }

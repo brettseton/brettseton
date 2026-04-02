@@ -146,6 +146,10 @@ a {
   align-items: center;
 }
 
+.terminal-form[hidden] {
+  display: none;
+}
+
 .app-controls {
   display: flex;
   justify-content: center;

@@ -6,7 +6,6 @@ use crate::apps::AppKey;
 use crate::terminal::bootstrap;
 use crate::terminal::model::{Effect, ViewModel};
 use crate::terminal::session::TerminalSession;
-use crate::terminal_fs::FileSystem;
 
 use self::action_dispatcher::ActionDispatcher;
 use self::state_machine::StateMachine;
@@ -30,9 +29,9 @@ pub struct TerminalCore {
 }
 
 impl TerminalCore {
-    pub fn new(terminal_fs: Box<dyn FileSystem>) -> Self {
+    pub fn new() -> Self {
         Self {
-            session: TerminalSession::new(terminal_fs, bootstrap::initial_history()),
+            session: TerminalSession::new(bootstrap::initial_screen()),
             dispatcher: ActionDispatcher::new(),
             state_machine: StateMachine::new(),
         }
@@ -40,10 +39,6 @@ impl TerminalCore {
 
     pub fn captures_keyboard(&self) -> bool {
         self.state_machine.captures_keyboard()
-    }
-
-    pub fn links(&self) -> &std::collections::BTreeMap<String, String> {
-        self.session.links()
     }
 
     pub fn prompt_enabled(&self) -> bool {
@@ -63,11 +58,7 @@ impl TerminalCore {
     }
 
     pub fn view(&self) -> ViewModel {
-        ViewModel::new(
-            self.session.history().to_vec(),
-            self.state_machine.view(),
-            self.state_machine.prompt_enabled(),
-        )
+        self.session.view(self.state_machine.prompt_enabled())
     }
 }
 

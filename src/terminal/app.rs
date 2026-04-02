@@ -7,13 +7,11 @@ use web_sys::EventTarget;
 use crate::terminal::core::{Action, TerminalCore};
 use crate::terminal::input;
 use crate::terminal::link::TerminalEffectHandler;
-use crate::terminal::socials::SocialLinks;
 use crate::terminal::ui::TerminalUi;
 
 pub struct TerminalApp {
     core: RefCell<TerminalCore>,
     ui: TerminalUi,
-    _socials: SocialLinks,
     effects: TerminalEffectHandler,
 }
 
@@ -23,17 +21,10 @@ pub struct MountedTerminalApp {
 }
 
 impl TerminalApp {
-    pub fn new(
-        ui: TerminalUi,
-        socials: SocialLinks,
-        effects: TerminalEffectHandler,
-        core: TerminalCore,
-    ) -> Self {
-        socials.apply(core.links());
+    pub fn new(ui: TerminalUi, effects: TerminalEffectHandler, core: TerminalCore) -> Self {
         Self {
             core: RefCell::new(core),
             ui,
-            _socials: socials,
             effects,
         }
     }

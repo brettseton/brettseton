@@ -7,23 +7,20 @@ use crate::terminal::shell_dom::ShellDom;
 
 pub struct TerminalSurface {
     shell: ShellDom,
-    history_content: HtmlElement,
-    app_view_content: HtmlElement,
+    screen_content: HtmlElement,
     controls: AppControls,
 }
 
 impl TerminalSurface {
     pub fn new(document: &Document) -> Result<Self, JsValue> {
         let shell = ShellDom::new(document)?;
-        let history_content = document.create_element("div")?.dyn_into::<HtmlElement>()?;
-        let app_view_content = document.create_element("div")?.dyn_into::<HtmlElement>()?;
+        let screen_content = document.create_element("div")?.dyn_into::<HtmlElement>()?;
         let controls = AppControls::new(document)?;
-        shell.attach(&history_content, &app_view_content)?;
+        shell.attach(&screen_content)?;
 
         Ok(Self {
             shell,
-            history_content,
-            app_view_content,
+            screen_content,
             controls,
         })
     }
@@ -68,20 +65,16 @@ impl TerminalSurface {
         self.controls.reset_thumb()
     }
 
-    pub fn replace_history(&self, fragment: &DocumentFragment) -> Result<(), JsValue> {
-        self.history_content.set_inner_html("");
-        self.history_content.append_child(fragment.as_ref() as &Node)?;
+    pub fn replace_screen(&self, fragment: &DocumentFragment) -> Result<(), JsValue> {
+        self.screen_content.set_inner_html("");
+        self.screen_content
+            .append_child(fragment.as_ref() as &Node)?;
         Ok(())
     }
 
-    pub fn append_history(&self, fragment: &DocumentFragment) -> Result<(), JsValue> {
-        self.history_content.append_child(fragment.as_ref() as &Node)?;
-        Ok(())
-    }
-
-    pub fn replace_app_view(&self, fragment: &DocumentFragment) -> Result<(), JsValue> {
-        self.app_view_content.set_inner_html("");
-        self.app_view_content.append_child(fragment.as_ref() as &Node)?;
+    pub fn append_screen(&self, fragment: &DocumentFragment) -> Result<(), JsValue> {
+        self.screen_content
+            .append_child(fragment.as_ref() as &Node)?;
         Ok(())
     }
 

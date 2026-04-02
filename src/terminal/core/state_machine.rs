@@ -1,4 +1,3 @@
-use crate::apps::AppLine;
 use crate::terminal::bootstrap;
 use crate::terminal::core::states::{ShellState, State, StateTransition, StateUpdate};
 use crate::terminal::session::TerminalSession;
@@ -26,10 +25,6 @@ impl StateMachine {
         self.state.captures_keyboard()
     }
 
-    pub fn view(&self) -> Vec<AppLine> {
-        self.state.view()
-    }
-
     pub fn apply(&mut self, transition: StateTransition, session: &mut TerminalSession) -> bool {
         let mut state_changed = false;
 
@@ -55,6 +50,8 @@ impl StateMachine {
             }
         }
 
+        session.sync_state_view(self.state.view(), self.state.uses_alternate_screen());
+
         state_changed
     }
 
@@ -62,7 +59,7 @@ impl StateMachine {
         let state_changed = update.changes_view();
 
         if update.reset_terminal {
-            session.reset(bootstrap::initial_history());
+            session.reset(bootstrap::initial_screen());
         }
 
         Self::append_output_lines(session, update.lines);

@@ -1,50 +1,37 @@
-use std::collections::BTreeMap;
-
-use crate::terminal::model::{Effect, Entry};
-use crate::terminal_fs::FileSystem;
+use crate::apps::AppLine;
+use crate::terminal::emulator::TerminalEmulator;
+use crate::terminal::model::{Effect, ScreenLine, ViewModel};
 
 pub struct TerminalSession {
-    terminal_fs: Box<dyn FileSystem>,
-    history: Vec<Entry>,
+    emulator: TerminalEmulator,
     effects: Vec<Effect>,
 }
 
 impl TerminalSession {
-    pub fn new(terminal_fs: Box<dyn FileSystem>, history: Vec<Entry>) -> Self {
+    pub fn new(initial_screen: Vec<ScreenLine>) -> Self {
         Self {
-            terminal_fs,
-            history,
+            emulator: TerminalEmulator::new(initial_screen),
             effects: Vec::new(),
         }
     }
 
-    pub fn history(&self) -> &[Entry] {
-        &self.history
-    }
-
-    pub fn links(&self) -> &BTreeMap<String, String> {
-        self.terminal_fs.links()
-    }
-
-    pub fn terminal_fs(&self) -> &dyn FileSystem {
-        self.terminal_fs.as_ref()
-    }
-
-    pub fn reset(&mut self, history: Vec<Entry>) {
-        self.history = history;
+    pub fn reset(&mut self, initial_screen: Vec<ScreenLine>) {
+        self.emulator.reset_primary(initial_screen);
         self.effects.clear();
     }
 
     pub fn record_command(&mut self, trimmed: &str) {
-        self.history.push(Entry::command(if trimmed.is_empty() {
-            " ".to_string()
-        } else {
-            trimmed.to_string()
-        }));
+        self.emulator
+            .write_command(if trimmed.is_empty() { " " } else { trimmed });
     }
 
     pub fn append_output(&mut self, lines: Vec<String>) {
-        self.history.extend(lines.into_iter().map(Entry::output));
+        self.emulator.write_output_lines(lines);
+    }
+
+    pub fn sync_state_view(&mut self, lines: Vec<AppLine>, use_alternate_screen: bool) {
+        self.emulator
+            .sync_alternate_screen(&lines, use_alternate_screen);
     }
 
     pub fn push_effect(&mut self, effect: Effect) {
@@ -53,5 +40,9 @@ impl TerminalSession {
 
     pub fn take_effects(&mut self) -> Vec<Effect> {
         std::mem::take(&mut self.effects)
+    }
+
+    pub fn view(&self, prompt_enabled: bool) -> ViewModel {
+        ViewModel::new(self.emulator.visible_lines().to_vec(), prompt_enabled)
     }
 }

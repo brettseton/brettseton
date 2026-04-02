@@ -1,46 +1,19 @@
 mod builtin;
 mod registry;
 
-use std::collections::BTreeSet;
-
 use crate::apps::AppKind;
-use crate::terminal_fs::FileSystem;
 
-pub struct CommandContext<'a> {
-    terminal_fs: &'a dyn FileSystem,
-    command_names: &'a [&'static str],
-    aliases: &'a [&'static str],
-}
+pub use registry::CommandRegistry;
 
-impl<'a> CommandContext<'a> {
-    pub fn new(
-        terminal_fs: &'a dyn FileSystem,
-        command_names: &'a [&'static str],
-        aliases: &'a [&'static str],
-    ) -> Self {
-        Self {
-            terminal_fs,
-            command_names,
-            aliases,
-        }
-    }
-
-    pub fn available_commands(&self) -> BTreeSet<String> {
-        let mut items: BTreeSet<String> = self.terminal_fs.root_items().into_iter().collect();
-        items.extend(self.command_names.iter().map(|name| (*name).to_string()));
-        items.extend(self.aliases.iter().map(|alias| (*alias).to_string()));
-        items
-    }
-
-    pub fn resolve_directory(&self, target: &str) -> Option<&[String]> {
-        self.terminal_fs.resolve_directory(target)
-    }
+pub struct CommandInvocation<'a> {
+    name: &'a str,
+    target: &'a str,
 }
 
 #[derive(Default)]
 pub struct CommandResult {
     lines: Vec<String>,
-    launch_app: Option<AppKind>,
+    start_program: Option<AppKind>,
     open_link: Option<String>,
     reset_terminal: bool,
 }
@@ -53,10 +26,10 @@ impl CommandResult {
         }
     }
 
-    pub fn with_launch(kind: AppKind, lines: Vec<String>) -> Self {
+    pub fn with_program(kind: AppKind, lines: Vec<String>) -> Self {
         Self {
             lines,
-            launch_app: Some(kind),
+            start_program: Some(kind),
             ..Self::default()
         }
     }
@@ -80,8 +53,8 @@ impl CommandResult {
         &self.lines
     }
 
-    pub fn launch_app(&self) -> Option<AppKind> {
-        self.launch_app
+    pub fn start_program(&self) -> Option<AppKind> {
+        self.start_program
     }
 
     pub fn open_link(&self) -> Option<&str> {
@@ -98,28 +71,12 @@ pub trait BuiltinCommand: Sync {
     fn aliases(&self) -> &'static [&'static str] {
         &[]
     }
-    fn execute(&self, target: &str, context: &CommandContext<'_>) -> CommandResult;
+    fn execute(&self, target: &str, registry: &CommandRegistry) -> CommandResult;
 }
 
-pub enum Executable {
-    Builtin(&'static dyn BuiltinCommand),
-    External(crate::terminal_fs::OwnedTerminalItem),
-}
-
-pub fn resolve(value: &str, terminal_fs: &dyn FileSystem) -> Option<Executable> {
-    if let Some(command) = registry::find(value) {
-        return Some(Executable::Builtin(command));
-    }
-
-    terminal_fs
-        .resolve_owned_item(value)
-        .map(Executable::External)
-}
-
-pub fn names() -> impl Iterator<Item = &'static str> {
-    registry::names()
-}
-
-pub fn aliases() -> impl Iterator<Item = &'static str> {
-    registry::aliases()
+fn parse(input: &str) -> CommandInvocation<'_> {
+    let mut parts = input.split_whitespace();
+    let name = parts.next().unwrap_or_default();
+    let target = input[name.len()..].trim_start();
+    CommandInvocation { name, target }
 }

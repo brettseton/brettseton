@@ -1,19 +1,16 @@
-use crate::commands::{CommandContext, aliases as command_aliases, names as command_names};
-use crate::terminal::core::states::{CommandCatalog, StateContext, StateTransition};
+use crate::commands::CommandRegistry;
+use crate::terminal::core::states::{StateContext, StateTransition};
 use crate::terminal::core::{Action, state_machine::StateMachine};
 use crate::terminal::session::TerminalSession;
 
 pub struct ActionDispatcher {
-    command_catalog: CommandCatalog,
+    command_registry: CommandRegistry,
 }
 
 impl ActionDispatcher {
     pub fn new() -> Self {
         Self {
-            command_catalog: CommandCatalog {
-                names: command_names().collect(),
-                aliases: command_aliases().collect(),
-            },
+            command_registry: CommandRegistry::new(),
         }
     }
 
@@ -43,17 +40,7 @@ impl ActionDispatcher {
         }
 
         session.record_command(&trimmed);
-        let context = StateContext::new(session.terminal_fs(), &self.command_catalog);
+        let context = StateContext::new(&self.command_registry);
         state_machine.state_mut().handle_command(&trimmed, &context)
-    }
-}
-
-impl StateContext<'_> {
-    pub fn command_context(&self) -> CommandContext<'_> {
-        CommandContext::new(
-            self.terminal_fs,
-            &self.command_catalog.names,
-            &self.command_catalog.aliases,
-        )
     }
 }

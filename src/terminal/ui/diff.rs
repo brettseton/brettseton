@@ -1,21 +1,14 @@
-use crate::apps::AppLine;
-use crate::terminal::model::{Entry, ViewModel};
+use crate::terminal::model::{ScreenLine, ViewModel};
 use crate::terminal::render_state::RenderState;
 
-pub enum HistoryChange<'a> {
+pub enum VisibleScreenChange<'a> {
     Noop,
-    Append(&'a [Entry]),
-    ReplaceAll(&'a [Entry]),
-}
-
-pub enum ActiveViewChange<'a> {
-    Noop,
-    ReplaceAll(&'a [AppLine]),
+    Append(&'a [ScreenLine]),
+    ReplaceAll(&'a [ScreenLine]),
 }
 
 pub struct RenderPlan<'a> {
-    pub history: HistoryChange<'a>,
-    pub active_view: ActiveViewChange<'a>,
+    pub visible_screen: VisibleScreenChange<'a>,
     pub prompt_enabled: bool,
 }
 
@@ -23,28 +16,22 @@ pub struct RenderDiffStrategy;
 
 impl RenderDiffStrategy {
     pub fn build<'a>(&self, previous: &RenderState, next: &'a ViewModel) -> RenderPlan<'a> {
-        let history = if !is_history_extension(previous.history(), next.history()) {
-            HistoryChange::ReplaceAll(next.history())
-        } else if previous.history().len() == next.history().len() {
-            HistoryChange::Noop
-        } else {
-            HistoryChange::Append(&next.history()[previous.history().len()..])
-        };
-
-        let active_view = if previous.active_view() == next.active_view() {
-            ActiveViewChange::Noop
-        } else {
-            ActiveViewChange::ReplaceAll(next.active_view())
-        };
+        let visible_screen =
+            if !is_visible_screen_extension(previous.visible_lines(), next.visible_lines()) {
+                VisibleScreenChange::ReplaceAll(next.visible_lines())
+            } else if previous.visible_lines().len() == next.visible_lines().len() {
+                VisibleScreenChange::Noop
+            } else {
+                VisibleScreenChange::Append(&next.visible_lines()[previous.visible_lines().len()..])
+            };
 
         RenderPlan {
-            history,
-            active_view,
+            visible_screen,
             prompt_enabled: next.prompt_enabled(),
         }
     }
 }
 
-fn is_history_extension(previous: &[Entry], next: &[Entry]) -> bool {
+fn is_visible_screen_extension(previous: &[ScreenLine], next: &[ScreenLine]) -> bool {
     previous.len() <= next.len() && previous.iter().zip(next.iter()).all(|(a, b)| a == b)
 }

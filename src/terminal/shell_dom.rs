@@ -24,15 +24,9 @@ impl ShellDom {
         })
     }
 
-    pub(crate) fn attach(
-        &self,
-        history_content: &HtmlElement,
-        app_view_content: &HtmlElement,
-    ) -> Result<(), JsValue> {
+    pub(crate) fn attach(&self, screen_content: &HtmlElement) -> Result<(), JsValue> {
         self.history_node
-            .append_child(history_content.as_ref() as &Node)?;
-        self.history_node
-            .append_child(app_view_content.as_ref() as &Node)?;
+            .append_child(screen_content.as_ref() as &Node)?;
         self.history_node
             .append_child(self.form_node.as_ref() as &Node)?;
         Ok(())
@@ -53,6 +47,7 @@ impl ShellDom {
     }
 
     pub(crate) fn set_prompt_enabled(&self, prompt_enabled: bool) {
+        self.form_node.set_hidden(!prompt_enabled);
         self.input_node.set_disabled(!prompt_enabled);
         if !prompt_enabled {
             self.input_node.set_value("");
